@@ -21,8 +21,7 @@ type UserController struct {
 // @router / [post]
 func (u *UserController) Post() {
 	var user models.User
-	// json.Unmarshal(u.Ctx.Input.RequestBody, &user)
-	u.ParseForm(&user);
+	json.Unmarshal(u.Ctx.Input.RequestBody, &user)
 	log.Println(&user, "s")
 	uRes := models.AddUser(user)
 	u.Data["json"] = map[string]interface{}{"user": uRes}

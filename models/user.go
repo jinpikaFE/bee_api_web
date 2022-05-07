@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"log"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -21,28 +22,44 @@ func init() {
 
 type User struct {
 	Id       string
-	Username string `valid:"Required;Match(/^Bee.*/)"`
+	Username string
 	Password string `valid:"Required"`
-	Profile  Profile
+	Profile Profile `valid:"Required"`
 }
 
 type Profile struct {
 	Gender  string
 	Age     int
-	Address string
+	Address string `valid:"Required"`
 	Email   string
 }
 
-// // 如果你的 struct 实现了接口 validation.ValidFormer
-// // 当 StructTag 中的测试都成功时，将会执行 Valid 函数进行自定义验证
-// func (u *user) Valid(v *validation.Validation) {
-
-// }
+// 如果你的 struct 实现了接口 validation.ValidFormer
+// 当 StructTag 中的测试都成功时，将会执行 Valid 函数进行自定义验证
+func (u *User) Valid(v *validation.Validation) {
+	if u.Profile == (Profile{}) {
+        // 通过 SetError 设置 Name 的错误信息，HasErrors 将会返回 true
+        v.SetError("Name", "名称里不能含有 admin")
+    }
+	valid := validation.Validation{}
+	b, err := valid.Valid(u.Profile)
+	if err != nil {
+		log.Panicln(err)
+	}
+	if !b {
+		for _, err := range valid.Errors {
+			v.SetError(err.Key, err.Message)
+		}
+	}
+}
 
 func AddUser(u User) interface{} {
 	u.Id = "user_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	UserList[u.Id] = &u
 	valid := validation.Validation{}
+	valid.Required(u.Username, "Username").Message("必须的")
+	valid.Match(u.Username, regexp.MustCompile("^Bee.*"), "Username.Match").Message("match")
+
 	b, err := valid.Valid(&u)
 	// 验证方法报错
 	if err != nil {
