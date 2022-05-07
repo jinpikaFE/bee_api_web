@@ -3,6 +3,7 @@ package controllers
 import (
 	"bee_api_web/models"
 	"encoding/json"
+	"log"
 
 	beego "github.com/beego/beego/v2/server/web"
 )
@@ -20,9 +21,11 @@ type UserController struct {
 // @router / [post]
 func (u *UserController) Post() {
 	var user models.User
-	json.Unmarshal(u.Ctx.Input.RequestBody, &user)
-	uid := models.AddUser(user)
-	u.Data["json"] = map[string]interface{}{"uid": uid}
+	// json.Unmarshal(u.Ctx.Input.RequestBody, &user)
+	u.ParseForm(&user);
+	log.Println(&user, "s")
+	uRes := models.AddUser(user)
+	u.Data["json"] = map[string]interface{}{"user": uRes}
 	u.ServeJSON()
 }
 

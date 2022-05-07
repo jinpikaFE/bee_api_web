@@ -2,8 +2,11 @@ package models
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"time"
+
+	"github.com/beego/beego/v2/core/validation"
 )
 
 var (
@@ -18,8 +21,8 @@ func init() {
 
 type User struct {
 	Id       string
-	Username string
-	Password string
+	Username string `valid:"Required;Match(/^Bee.*/)"`
+	Password string `valid:"Required"`
 	Profile  Profile
 }
 
@@ -30,9 +33,29 @@ type Profile struct {
 	Email   string
 }
 
+// // 如果你的 struct 实现了接口 validation.ValidFormer
+// // 当 StructTag 中的测试都成功时，将会执行 Valid 函数进行自定义验证
+// func (u *user) Valid(v *validation.Validation) {
+
+// }
+
 func AddUser(u User) interface{} {
 	u.Id = "user_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	UserList[u.Id] = &u
+	valid := validation.Validation{}
+	b, err := valid.Valid(&u)
+	// 验证方法报错
+	if err != nil {
+		log.Panicln(err)
+	}
+	// 验证不通过
+	if !b {
+		errMap := make(map[string]interface{})
+		for _, err := range valid.Errors {
+			errMap[err.Key] = err.Message
+		}
+		return &errMap
+	}
 	return &u
 }
 
